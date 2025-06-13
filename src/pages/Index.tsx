@@ -9,17 +9,27 @@ import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionDialog } from "@/components/AddTransactionDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, TrendingDown, DollarSign, Target } from "lucide-react";
+import { useMonthlyStats } from "@/services/api";
 
 const Index = () => {
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
 
-  // Mock data - this will be replaced with your colleague's API data
-  const monthlyStats = {
+  // Fetch monthly stats from API
+  const { data: monthlyStats, isLoading, error } = useMonthlyStats();
+
+  // Fallback data while loading or if API fails
+  const defaultStats = {
     totalIncome: 5420.00,
     totalExpenses: 3890.50,
     savings: 1529.50,
     budgetUsed: 72.8
   };
+
+  const stats = monthlyStats || defaultStats;
+
+  if (error) {
+    console.error('Failed to load monthly stats:', error);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -49,7 +59,9 @@ const Index = () => {
               <TrendingUp className="h-4 w-4 opacity-90" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${monthlyStats.totalIncome.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? '...' : `$${stats.totalIncome.toLocaleString()}`}
+              </div>
               <p className="text-xs opacity-90">+12% from last month</p>
             </CardContent>
           </Card>
@@ -60,7 +72,9 @@ const Index = () => {
               <TrendingDown className="h-4 w-4 opacity-90" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${monthlyStats.totalExpenses.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? '...' : `$${stats.totalExpenses.toLocaleString()}`}
+              </div>
               <p className="text-xs opacity-90">-5% from last month</p>
             </CardContent>
           </Card>
@@ -71,7 +85,9 @@ const Index = () => {
               <DollarSign className="h-4 w-4 opacity-90" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${monthlyStats.savings.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? '...' : `$${stats.savings.toLocaleString()}`}
+              </div>
               <p className="text-xs opacity-90">+28% from last month</p>
             </CardContent>
           </Card>
@@ -82,7 +98,9 @@ const Index = () => {
               <Target className="h-4 w-4 opacity-90" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{monthlyStats.budgetUsed}%</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? '...' : `${stats.budgetUsed}%`}
+              </div>
               <p className="text-xs opacity-90">Within budget range</p>
             </CardContent>
           </Card>

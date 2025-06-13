@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useCreateTransaction } from "@/services/api";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -20,6 +21,9 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
   const [category, setCategory] = useState("");
   const { toast } = useToast();
 
+  // Use the API mutation hook
+  const createTransactionMutation = useCreateTransaction();
+
   const categories = [
     "Food & Dining",
     "Transportation", 
@@ -31,28 +35,37 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
     "Other"
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Here you would typically send the data to your colleague's API
-    console.log("Transaction data:", {
-      type,
-      description,
-      amount: parseFloat(amount),
-      category,
-      date: new Date().toISOString().split('T')[0]
-    });
+    try {
+      // Call the API to create the transaction
+      await createTransactionMutation.mutateAsync({
+        type: type as 'income' | 'expense',
+        description,
+        amount: parseFloat(amount),
+        category,
+        date: new Date().toISOString().split('T')[0]
+      });
 
-    toast({
-      title: "Transaction added",
-      description: `${type === 'income' ? 'Income' : 'Expense'} of $${amount} has been recorded.`,
-    });
+      toast({
+        title: "Transaction added",
+        description: `${type === 'income' ? 'Income' : 'Expense'} of $${amount} has been recorded.`,
+      });
 
-    // Reset form
-    setDescription("");
-    setAmount("");
-    setCategory("");
-    onOpenChange(false);
+      // Reset form
+      setDescription("");
+      setAmount("");
+      setCategory("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to create transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -132,8 +145,9 @@ export const AddTransactionDialog = ({ open, onOpenChange }: AddTransactionDialo
             <Button
               type="submit"
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              disabled={createTransactionMutation.isPending}
             >
-              Add Transaction
+              {createTransactionMutation.isPending ? 'Adding...' : 'Add Transaction'}
             </Button>
           </div>
         </form>
